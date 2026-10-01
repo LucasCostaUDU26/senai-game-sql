@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SENAI GAME SQL - Módulo Espacial</title>
+    <!-- Fontes Google -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-dark: #050814;
+            --card-bg: rgba(13, 22, 45, 0.75);
+            --card-border: rgba(56, 189, 248, 0.3);
+            --neon-blue: #00f0ff;
+            --neon-purple: #7000ff;
+            --neon-pink: #ff007f;
+            --text-light: #f8fafc;
+            --text-dim: #94a3b8;
+            --success: #00ff88;
+            --error: #ff3366;
+            --warning: #ffaa00;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+            background-image: 
+                radial-gradient(circle at 15% 20%, rgba(112, 0, 255, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 85% 80%, rgba(0, 240, 255, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(5, 8, 20, 0.8) 0%, rgba(5, 8, 20, 1) 100%);
+        }
+
+        /* Animação Estrelas / Background */
+        .stars-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            background: transparent url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 800 800"><g fill="%23FFF" opacity="0.3"><circle cx="100" cy="100" r="1"/><circle cx="300" cy="400" r="1.5"/><circle cx="600" cy="200" r="1"/><circle cx="700" cy="600" r="2"/><circle cx="200" cy="700" r="1"/></g></svg>') repeat;
+            animation: moveStars 100s linear infinite;
+        }
+
+        @keyframes moveStars {
+            from { background-position: 0 0; }
+            to { background-position: 1000px 1000px; }
+        }
+
+        /* Moldura Permanente (Cabeçalho e Rodapé Fixos) */
+        header, footer {
+            width: 100%;
+            background: rgba(5, 8, 20, 0.85);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--card-border);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.1);
+        }
+
+        footer {
+            border-bottom: none;
+            border-top: 1px solid var(--card-border);
+            justify-content: center;
+            font-size: 0.95rem;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+        }
+
+        .brand-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 800;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+        }
+
+        .institution-badge {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            color: var(--neon-blue);
+            background: rgba(0, 240, 255, 0.1);
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            letter-spacing: 1px;
+        }
+
+        /* Container de Telas */
+        main {
+            width: 100%;
+            max-width: 1100px;
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            z-index: 5;
+        }
+
+        .screen {
+            display: none;
+            width: 100%;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 35px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(0, 240, 255, 0.05);
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1, h2, h3 {
+            font-family: 'Orbitron', sans-serif;
+            margin-bottom: 20px;
+            color: var(--text-light);
+            letter-spacing: 1.5px;
+        }
+
+        /* Formulários e Inputs */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 18px;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 0.9rem;
+            color: var(--neon-blue);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        input {
+            background: rgba(5, 8, 20, 0.7);
+            border: 1px solid var(--card-border);
+            padding: 12px 16px;
+            border-radius: 8px;
+            color: var(--text-light);
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+        }
+
+        /* Botões Estilizados */
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            margin-top: 15px;
+        }
+
+        .btn {
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(112, 0, 255, 0.4));
+            border: 1px solid var(--neon-blue);
+            color: var(--text-light);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.5), rgba(112, 0, 255, 0.8));
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border-color: var(--text-dim);
+            color: var(--text-dim);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-light);
+            box-shadow: none;
+        }
+
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        /* Quiz Layout */
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 1%;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+            transition: width 0.3s ease;
+        }
+
+        .quiz-body {
+            min-height: 250px;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.6);
+            border-left: 3px solid var(--neon-blue);
+            padding: 15px;
+            border-radius: 6px;
+            color: #e2e8f0;
+            font-family: monospace;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .option-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 14px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1.05rem;
+        }
+
+        .option-card:hover {
+            border-color: var(--neon-blue);
+            background: rgba(0, 240, 255, 0.08);
+        }
+
+        .option-card.selected {
+            border-color: var(--neon-blue);
+            background: rgba(0, 240, 255, 0.2);
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+        }
+
+        /* Tabela Ranking */
+        .ranking-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .ranking-table th, .ranking-table td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .ranking-table th {
+            color: var(--neon-blue);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+
+        .ranking-table tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        /* Overlays e Modais */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(5, 8, 20, 0.9);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border: 1px solid var(--neon-pink);
+            box-shadow: 0 0 30px rgba(255, 0, 127, 0.4);
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .notification-toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #0f172a;
+            border: 1px solid var(--neon-blue);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+            border-radius: 10px;
+            padding: 16px 20px;
+            max-width: 380px;
+            z-index: 1000;
+            display: none;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .toast-header {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            color: var(--neon-blue);
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .toast-body {
+            font-size: 0.95rem;
+            color: var(--text-light);
+            line-height: 1.4;
+        }
+
+        /* Links adicionais */
+        .link-text {
+            color: var(--neon-blue);
+            cursor: pointer;
+            text-decoration: underline;
+            font-size: 0.9rem;
+        }
+
+        .link-text:hover {
+            color: var(--text-light);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="stars-bg"></div>
+
+    <!-- Cabeçalho Fixo -->
+    <header>
+        <div class="brand-title">SENAI GAME SQL</div>
+        <div class="institution-badge">SENAI CELSO CHARURI UBERLANDIA</div>
+    </header>
+
+    <!-- Conteúdo Principal - Telas em Navegação -->
+    <main>
+        <!-- TELA DE LOGIN -->
+        <div id="screen-login" class="screen active">
+            <h2>Acesso ao Sistema NAVE SQL</h2>
+            <p style="margin-bottom: 20px; color: var(--text-dim);">Autentique-se para entrar na simulação espacial.</p>
+            
+            <form id="form-login" onsubmit="handleLogin(event)">
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>E-mail Cadastrado</label>
+                    <input type="email" id="login-email" required placeholder="seu.email@dominio.com">
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label>Senha de Acesso</label>
+                    <input type="password" id="login-password" required placeholder="••••••••">
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <span class="link-text" onclick="showScreen('screen-forgot')">Esqueci / Alterar Senha</span>
+                    <span class="link-text" onclick="showScreen('screen-register')">Criar Nova Conta</span>
+                </div>
+
+                <div class="btn-group">
+                    <button type="button" class="btn btn-secondary" onclick="showScreen('screen-ranking')">Ver Ranking Público</button>
+                    <button type="submit" class="btn">Entrar no Game</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- TELA DE CADASTRO -->
+        <div id="screen-register" class="screen">
+            <h2>Registro de Comandante</h2>
+            <p style="margin-bottom: 20px; color: var(--text-dim);">Preencha suas credenciais para iniciar o treinamento SQL.</p>
+
+            <form id="form-register" onsubmit="handleRegister(event)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nome Completo</label>
+                        <input type="text" id="reg-name" required placeholder="Ex: Lucas de Paula">
+                    </div>
+                    <div class="form-group">
+                        <label>Apelido / GamerTag</label>
+                        <input type="text" id="reg-nickname" required placeholder="Ex: CyberSql">
+                    </div>
+                    <div class="form-group">
+                        <label>Idade</label>
+                        <input type="number" id="reg-age" min="10" max="100" required placeholder="Ex: 22">
+                    </div>
+                    <div class="form-group">
+                        <label>Contato (Telefone)</label>
+                        <input type="tel" id="reg-phone" required placeholder="(34) 99999-0000">
+                    </div>
+                    <div class="form-group">
+                        <label>WhatsApp</label>
+                        <input type="tel" id="reg-whatsapp" required placeholder="(34) 99999-0000">
+                    </div>
+                    <div class="form-group">
+                        <label>E-mail</label>
+                        <input type="email" id="reg-email" required placeholder="piloto@senai.br">
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Senha</label>
+                        <input type="password" id="reg-password" required placeholder="Digite uma senha forte">
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button type="button" class="btn btn-secondary" onclick="showScreen('screen-login')">Voltar ao Login</button>
+                    <button type="submit" class="btn">Confirmar Cadastro</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- TELA DE RECUPERAÇÃO / ALTERAÇÃO DE SENHA -->
+        <div id="screen-forgot" class="screen">
+            <h2>Recuperação de Acesso</h2>
+            <p style="margin-bottom: 20px; color: var(--text-dim);">Informe seu e-mail para receber o Código de Autenticação (OTP).</p>
+
+            <div id="step-otp-req">
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label>E-mail Cadastrado</label>
+                    <input type="email" id="forgot-email" placeholder="seu.email@dominio.com">
+                </div>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-secondary" onclick="showScreen('screen-login')">Cancelar</button>
+                    <button type="button" class="btn" onclick="sendOTP()">Gerar & Enviar Código OTP</button>
+                </div>
+            </div>
+
+            <div id="step-otp-verify" style="display: none;">
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>Código OTP de 6 dígitos</label>
+                    <input type="text" id="otp-code-input" maxlength="6" placeholder="000000">
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label>Nova Senha</label>
+                    <input type="password" id="new-password-input" placeholder="Digite a nova senha">
+                </div>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-secondary" onclick="showScreen('screen-login')">Cancelar</button>
+                    <button type="button" class="btn" onclick="resetPassword()">Redefinir Senha</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TELA DE QUIZ (100 SLIDES) -->
+        <div id="screen-quiz" class="screen">
+            <div class="quiz-header">
+                <div>
+                    <span id="quiz-type-badge" style="color: var(--neon-blue); font-weight: bold; font-family: 'Orbitron';">SLIDE 1</span>
+                    <span id="player-welcome" style="margin-left: 15px; color: var(--text-dim);"></span>
+                </div>
+                <div style="font-family: 'Orbitron'; color: var(--neon-pink); font-weight: bold;" id="quiz-counter">1 / 100</div>
+            </div>
+
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="quiz-progress"></div>
+            </div>
+
+            <div class="quiz-body" id="quiz-content-area">
+                <!-- Conteúdo do Slide Injetado por JS -->
+            </div>
+
+            <div class="btn-group" style="margin-top: 25px; border-top: 1px solid var(--card-border); padding-top: 20px;">
+                <button class="btn btn-secondary" id="btn-prev-slide" onclick="navigateSlide(-1)">Anterior</button>
+                <button class="btn" id="btn-check-answer" style="display: none; background: linear-gradient(135deg, rgba(255, 170, 0, 0.4), rgba(255, 0, 127, 0.4)); border-color: var(--warning);" onclick="checkQuizAnswer()">Verificar Resposta</button>
+                <button class="btn" id="btn-next-slide" onclick="navigateSlide(1)">Próximo</button>
+            </div>
+        </div>
+
+        <!-- TELA DE RANKING PÚBLICO -->
+        <div id="screen-ranking" class="screen">
+            <h2>Hall da Fama SQL - Ranking Espacial</h2>
+            <p style="color: var(--text-dim); margin-bottom: 20px;">Pontuações dos cadetes registradas no sistema central.</p>
+
+            <table class="ranking-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Apelido / GamerTag</th>
+                        <th>Pontuação</th>
+                        <th>Data / Hora</th>
+                    </tr>
+                </thead>
+                <tbody id="ranking-tbody">
+                    <!-- Registros Injetados via JS -->
+                </tbody>
+            </table>
+
+            <div class="btn-group" style="margin-top: 25px;">
+                <button class="btn btn-secondary" onclick="showScreen('screen-login')">Voltar ao Login</button>
+                <button class="btn" onclick="startQuizIfLogged()">Ir para o Game</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Rodapé Fixo (Desenvolvedor) -->
+    <footer>
+        DESENVOLVEDOR DO GAME: POR LUCAS DE PAULA COSTA
+    </footer>
+
+    <!-- Overlay Antifraude / Cópia -->
+    <div class="modal-overlay" id="anticheat-modal">
+        <div class="modal-content">
+            <h2 style="color: var(--neon-pink);">⚠️ ALERTA DE SEGURANÇA</h2>
+            <p style="margin: 15px 0; color: var(--text-light);">Ações não autorizadas detectadas (Copia/Cola, Menu de Contexto ou Troca de Janela).</p>
+            <p style="font-size: 0.9rem; color: var(--text-dim); margin-bottom: 20px;">Para manter a integridade do teste no <b>SENAI GAME SQL</b>, evite utilizar atalhos externos.</p>
+            <button class="btn" onclick="closeAntiCheatModal()">Retornar ao Game</button>
+        </div>
+    </div>
+
+    <!-- Toast de Notificações Simultâneas (Email / WhatsApp SIMULADO) -->
+    <div class="notification-toast" id="toast-notify">
+        <div class="toast-header">
+            <span id="toast-app-name">SENAI GAME SQL NOTIFY</span>
+            <span id="toast-time">Agora</span>
+        </div>
+        <div class="toast-body" id="toast-message">
+            Mensagem do sistema...
+        </div>
+    </div>
+
+    <script>
+        /* ==========================================================================
+           1. ESTRUTURA DE DADOS DOS 100 SLIDES (50 Teoria + 50 Quiz)
+           ========================================================================== */
+        const sqlTopics = [
+            { t: "O que é SQL?", c: "SQL (Structured Query Language) é a linguagem padrão para interagir com Bancos de Dados Relacionais.", q: "O que significa a sigla SQL?", o: ["Structured Query Language", "Sequential Query Logic", "System Quality Language"], a: 0 },
+            { t: "Tabelas e Registros", c: "Tabelas organizam dados em linhas (registros) e colunas (campos de atributos).", q: "Em um banco relacional, as linhas de uma tabela representam:", o: ["Atributos", "Registros / Dados", "Chaves Estrangeiras"], a: 1 },
+            { t: "Comando SELECT", c: "Usado para extrair/consultar registros do banco de dados.", q: "Qual comando busca dados de uma tabela?", o: ["FETCH", "GET", "SELECT"], a: 2 },
+            { t: "Cláusula WHERE", c: "Filtra resultados que atendam a condições específicas de busca.", q: "Para que serve a cláusula WHERE?", o: ["Filtrar registros por condição", "Ordenar listas", "Agrupar resultados"], a: 0 },
+            { t: "Comando INSERT INTO", c: "Insere novas linhas de registro em uma tabela existente.", q: "Qual comando adiciona novas linhas de dados?", o: ["ADD ROW", "INSERT INTO", "UPDATE"], a: 1 },
+            { t: "Comando UPDATE", c: "Modifica os valores armazenados em colunas de uma tabela. ATENÇÃO ao usar WHERE!", q: "O que ocorre ao executar UPDATE sem WHERE?", o: ["Gera erro", "Atualiza a 1ª linha", "Atualiza TODAS as linhas da tabela"], a: 2 },
+            { t: "Comando DELETE", c: "Remove registros de uma tabela. Utilize a cláusula WHERE para delimitar o alvo.", q: "Como deletar de forma segura um ID específico?", o: ["DELETE FROM tabela WHERE id = 1", "DROP TABLE tabela", "REMOVE FROM tabela"], a: 0 },
+            { t: "Ordenação ORDER BY", c: "Classifica os dados em ordem crescente (ASC) ou decrescente (DESC).", q: "Qual parâmetro define a ordem decrescente?", o: ["DOWN", "DESC", "DECREASE"], a: 1 },
+            { t: "Função COUNT()", c: "Conta a quantidade de registros ou entradas retornadas em uma instrução.", q: "A instrução COUNT(*) retorna:", o: ["A soma dos valores", "O total de linhas encontradas", "A média dos registros"], a: 1 },
+            { t: "Funções SUM e AVG", c: "SUM() realiza a soma dos valores de uma coluna; AVG() calcula a média aritmética.", q: "Qual função calcula a média de valores?", o: ["MEAN()", "AVG()", "SUM()"], a: 1 },
+            { t: "Funções MIN e MAX", c: "Encontram o menor (MIN) e o maior (MAX) valor em uma coluna de dados.", q: "Para encontrar o preço máximo na tabela de produtos:", o: ["SELECT MAX(preco) FROM produtos;", "SELECT HIGH(preco) FROM produtos;", "SELECT TOP(preco) FROM produtos;"], a: 0 },
+            { t: "Agrupamento GROUP BY", c: "Agrupa linhas que possuem valores idênticos em colunas agregadas.", q: "O GROUP BY é utilizado frequentemente com:", o: ["DROP e DELETE", "Funções de agregação (COUNT, SUM...)", "LIMIT"], a: 1 },
+            { t: "Filtro de Grupos HAVING", c: "Aplica condições de filtro aos grupos gerados pelo GROUP BY.", q: "Qual a diferença entre WHERE e HAVING?", o: ["Não há diferença", "WHERE filtra dados agregados", "WHERE filtra linhas antes do agrupamento; HAVING filtra os grupos"], a: 2 },
+            { t: "Chave Primária (Primary Key)", c: "Identificador único e exclusivo para cada linha de uma tabela. Não permite nulos.", q: "A Primary Key pode conter duplicatas?", o: ["Sim", "Não, deve ser estritamente única e não nula", "Apenas em domínios especiais"], a: 1 },
+            { t: "Chave Estrangeira (Foreign Key)", c: "Campo em uma tabela que estabelece ligação com a Primary Key de outra tabela.", q: "A Foreign Key garante:", o: ["Integridade referencial entre tabelas", "Criptografia de dados", "Backup automático"], a: 0 },
+            { t: "INNER JOIN", c: "Mapeia e retorna registros que possuem correspondência em ambas as tabelas associadas.", q: "O INNER JOIN retorna quais dados?", o: ["Todos de ambas as tabelas", "Somente registros correspondentes entre as tabelas", "Apenas a tabela esquerda"], a: 1 },
+            { t: "LEFT JOIN", c: "Preserva todos os registros da tabela à esquerda e vincula correspondentes da direita.", q: "Se não houver correspondência na direita em um LEFT JOIN, o resultado será:", o: ["Erro", "Preenchido com NULL", "A linha é ocultada"], a: 1 },
+            { t: "RIGHT JOIN", c: "Preserva todos os registros da tabela à direita e traz os correspondentes da esquerda.", q: "O RIGHT JOIN prioriza dados de qual tabela?", o: ["Tabela da esquerda", "Tabela da direita", "Ambas por completo"], a: 1 },
+            { t: "FULL OUTER JOIN", c: "Retorna todos os registros quando houver correspondência em qualquer uma das tabelas.", q: "Qual JOIN consolida os registros completos de ambas as tabelas?", o: ["CROSS JOIN", "INNER JOIN", "FULL OUTER JOIN"], a: 2 },
+            { t: "Operador LIKE", c: "Utilizado com o sinal de percentual (%) para buscar padrões de texto.", q: "A expressão WHERE nome LIKE 'A%' busca:", o: ["Nomes finalizados com A", "Nomes que começam com a letra A", "Nomes contendo apenas A"], a: 1 },
+            { t: "Operador IN", c: "Determina se um valor especificado corresponde a qualquer valor em uma lista.", q: "O operador IN simplifica qual operação?", o: ["Múltiplos testes OR de forma limpa", "Inclusão de colunas", "Criação de gatilhos"], a: 0 },
+            { t: "Operador BETWEEN", c: "Seleciona valores dentro de um intervalo inclusivo (mínimo e máximo).", q: "WHERE valor BETWEEN 10 AND 50 equivale a:", o: ["valor > 10 AND valor < 50", "valor >= 10 AND valor <= 50", "valor = 10 OR valor = 50"], a: 1 },
+            { t: "Alias com AS", c: "Define um nome temporário para colunas ou tabelas na exibição da consulta.", q: "O comando SELECT nome AS aluno altera o nome no banco permanentemente?", o: ["Sim", "Não, é apenas um rótulo de exibição temporário", "Apaga o campo nome"], a: 1 },
+            { t: "Limitação com LIMIT", c: "Restringe a quantidade de linhas retornadas pelo resultado da consulta.", q: "Em PostgreSQL/MySQL, para limitar em 5 linhas:", o: ["LIMIT 5", "TOP 5", "FIRST 5"], a: 0 },
+            { t: "Tratamento de Nulos (IS NULL)", c: "Mapeia a ausência de valores cadastrados em uma coluna.", q: "Como filtrar registros sem valor?", o: ["WHERE campo = NULL", "WHERE campo IS NULL", "WHERE campo == 0"], a: 1 },
+            { t: "Comando CREATE TABLE", c: "Define e estrutura uma nova tabela informando os campos e tipos de dados.", q: "Qual tipo de dado é apropriado para textos longos?", o: ["INT", "VARCHAR / TEXT", "DATETIME"], a: 1 },
+            { t: "Comando ALTER TABLE", c: "Altera a estrutura de uma tabela já criada (adiciona, exclui ou modifica colunas).", q: "Para adicionar a coluna 'email' na tabela 'usuarios':", o: ["ALTER TABLE usuarios ADD email VARCHAR(100);", "UPDATE TABLE usuarios ADD email;", "MODIFY TABLE usuarios INSERT email;"], a: 0 },
+            { t: "Comando DROP TABLE", c: "Elimina permanentemente a tabela e toda a sua estrutura do banco de dados.", q: "Diferença entre DROP e DELETE:", o: ["Não há", "DROP remove estrutura e dados; DELETE apaga apenas as linhas", "DELETE remove a tabela inteira do disco"], a: 1 },
+            { t: "Comando TRUNCATE", c: "Esvazia todos os registros de uma tabela mantendo sua estrutura original intacta.", q: "O TRUNCATE TABLE é:", o: ["Mais rápido que o DELETE para ejetar dados", "Substituto do CREATE", "Lento e arriscado"], a: 0 },
+            { t: "Tipos de Dados Números", c: "INT armazena inteiros; DECIMAL/FLOAT armazenam valores numéricos com casas decimais.", q: "Tipo ideal para armazenar moeda/preço com precisão:", o: ["INT", "DECIMAL / NUMERIC", "VARCHAR"], a: 1 },
+            { t: "VARCHAR vs CHAR", c: "CHAR é de tamanho fixo; VARCHAR aloca dinamicamente o tamanho do texto inserido.", q: "Vantagem do VARCHAR(100):", o: ["Aloca apenas os bytes do texto inserido", "Ocupa obrigatoriamente 100 bytes", "É um número inteiro"], a: 0 },
+            { t: "Restrição UNIQUE", c: "Garante que todos os valores inseridos na coluna sejam exclusivos no banco.", q: "A restrição UNIQUE difere da PRIMARY KEY pois:", o: ["Pode permitir um registro com valor NULL", "Aceita duplicatas", "É aplicada apenas em texto"], a: 0 },
+            { t: "Restrição NOT NULL", c: "Impede a inserção de registros sem preenchimento na coluna determinada.", q: "Ao tentar inserir NULL em uma coluna NOT NULL:", o: ["O banco aceita", "O banco rejeita e lança um erro", "Converte em zero"], a: 1 },
+            { t: "Restrição DEFAULT", c: "Preenche automaticamente a coluna com um valor padrão caso nenhum seja informado.", q: "Se a data não for informada na inserção, o DEFAULT pode:", o: ["Gerar falha de sistema", "Inserir a data atual do servidor automaticamente", "Deletar a linha"], a: 1 },
+            { t: "Restrição CHECK", c: "Assegura que os valores inseridos satisfaçam uma expressão lógica ou validação.", q: "Para proibir cadastros de menores de 18 anos:", o: ["CHECK (idade >= 18)", "DEFAULT 18", "UNIQUE (idade)"], a: 0 },
+            { t: "Índices (INDEX)", c: "Estruturas criadas para acelerar a velocidade de busca e leitura de dados.", q: "Desvantagem de Índices em excesso:", o: ["Pode desacelerar inserções (INSERT) e atualizações (UPDATE)", "Reduz velocidade do SELECT", "Apaga dados antigos"], a: 0 },
+            { t: "Visões (VIEWS)", c: "Uma consulta salva que funciona como uma tabela virtual dinamicamente atualizada.", q: "Uma VIEW armazena os dados duplicados em disco?", o: ["Sim", "Não, ela executa a consulta de origem ao ser chamada", "Apenas quando ativada por DELETE"], a: 1 },
+            { t: "Transações: COMMIT", c: "Consolida e grava em caráter permanente todas as modificações da transação.", q: "O comando COMMIT serve para:", o: ["Desfazer alterações", "Confirmar e salvar permanentemente as alterações", "Criar um log"], a: 1 },
+            { t: "Transações: ROLLBACK", c: "Cancela e desfaz alterações não confirmadas de uma transação com erro.", q: "O comando ROLLBACK é usado para:", o: ["Avançar o código", "Desfazer alterações não salvas", "Fechar a conexão"], a: 1 },
+            { t: "ACID: Atomicidade", c: "Uma transação é tratada como uma unidade única: 'tudo ou nada' é executado.", q: "Atomicidade significa:", o: ["A transação deve ser executada completamente ou revertida", "A transação é dividida em partes soltas", "Que envolve criptografia de dados"], a: 0 },
+            { t: "ACID: Consistência", c: "Garante que as regras e constraints do banco sejam respeitadas antes e depois da transação.", q: "Consistência assegura:", o: ["Respeito a todas as regras da base de dados", "Acesso via Wi-Fi", "Uso de inteligência artificial"], a: 0 },
+            { t: "ACID: Isolamento", c: "Previne que transações concorrentes/simultâneas interfiram entre si.", q: "O isolamento impede:", o: ["Acesso não autorizado ao Wi-Fi", "Conflitos entre transações concorrentes", "Uso de tabelas relacionais"], a: 1 },
+            { t: "ACID: Durabilidade", c: "Modificações salvas com COMMIT persistem mesmo em eventuais falhas do servidor.", q: "Durabilidade garante:", o: ["Manutenção dos dados gravados pós-COMMIT em caso de queda de energia", "Que o hardware não envelheça", "Bloqueio do banco de dados"], a: 0 },
+            { t: "Subconsultas (Subqueries)", c: "Consultas SQL aninhadas/inseridas no interior de uma consulta principal.", q: "Subqueries podem ser utilizadas em:", o: ["Apenas no DELETE", "Cláusulas SELECT, WHERE e FROM", "Apenas no CREATE"], a: 1 },
+            { t: "Função COALESCE", c: "Retorna o primeiro valor não nulo presente na lista de parâmetros.", q: "SELECT COALESCE(NULL, NULL, 'SQL', 'GAME') retorna:", o: ["NULL", "'SQL'", "'GAME'"], a: 1 },
+            { t: "Operador UNION", c: "Combina os resultados de dois ou mais SELECTs em um único conjunto de dados.", q: "Diferença entre UNION e UNION ALL:", o: ["UNION remove duplicatas; UNION ALL mantém todas as linhas", "UNION é apenas para números", "Não existe diferença"], a: 0 },
+            { t: "Funções Temporais (NOW, CURDATE)", c: "Instruções que capturam a data e a hora atuais do servidor de banco de dados.", q: "Para obter a data e hora atual do servidor usa-se:", o: ["GETDATE()", "NOW() ou CURRENT_TIMESTAMP", "DATETIME()"], a: 1 },
+            { t: "Stored Procedures", c: "Conjunto de instruções SQL armazenadas e compiladas dentro do próprio servidor de banco.", q: "Benefício de Stored Procedures:", o: ["Redução de tráfego na rede e execução otimizada", "Dispensa o uso de tabelas", "Não precisa de senhas"], a: 0 },
+            { t: "Triggers (Gatilhos)", c: "Blocos de código disparados automaticamente mediante evento DML (INSERT, UPDATE...).", q: "Um trigger 'BEFORE INSERT' é executado:", o: ["Antes da gravação da nova linha no banco", "Depois de apagar o registro", "No encerramento da conexão"], a: 0 },
+            { t: "Normalização de Dados (1FN)", c: "Processo de estruturação para diminuir redundâncias e inconsistências no banco.", q: "A Primeira Forma Normal (1FN) estabelece:", o: ["Atributos atômicos sem repetição de grupos na mesma célula", "Apenas chaves numéricas", "Proibição do uso de JOIN"], a: 0 }
+        ];
+
+        // Montando o array de 100 slides intercalados
+        const slides = [];
+        sqlTopics.forEach((item, index) => {
+            // Teoria
+            slides.push({
+                type: 'theory',
+                title: `${index + 1}. Módulo Teórico: ${item.t}`,
+                content: item.c
+            });
+            // Quiz
+            slides.push({
+                type: 'quiz',
+                title: `Desafio ${index + 1}: Módulos de Comando`,
+                question: item.q,
+                options: item.o,
+                correct: item.a,
+                attemptsLeft: 3
+            });
+        });
+
+        /* ==========================================================================
+           2. ESTADO GLOBAL DA APLICAÇÃO E LOCALSTORAGE
+           ========================================================================== */
+        let currentUser = null;
+        let currentSlideIdx = 0;
+        let selectedQuizOption = null;
+        let activeOTP = null;
+
+        // Inicialização de Banco de Dados Local
+        function getStorage(key) {
+            return JSON.parse(localStorage.getItem(key)) || [];
+        }
+
+        function setStorage(key, data) {
+            localStorage.setItem(key, JSON.stringify(data));
+        }
+
+        /* ==========================================================================
+           3. NAVEGAÇÃO E SISTEMA DE TELAS
+           ========================================================================== */
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+
+            if (screenId === 'screen-ranking') {
+                renderRanking();
+            }
+        }
+
+        function triggerNotification(msg, title = "SENAI GAME SQL") {
+            const toast = document.getElementById('toast-notify');
+            document.getElementById('toast-app-name').innerText = title;
+            document.getElementById('toast-message').innerText = msg;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 5500);
+        }
+
+        /* ==========================================================================
+           4. AUTENTICAÇÃO, CADASTRO E GERENCIAMENTO DE SENHAS
+           ========================================================================== */
+        function handleRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('reg-name').value.trim();
+            const nickname = document.getElementById('reg-nickname').value.trim();
+            const age = document.getElementById('reg-age').value;
+            const phone = document.getElementById('reg-phone').value.trim();
+            const whatsapp = document.getElementById('reg-whatsapp').value.trim();
+            const email = document.getElementById('reg-email').value.trim().toLowerCase();
+            const password = document.getElementById('reg-password').value;
+
+            const users = getStorage('senai_users');
+
+            // Validação de Duplicidade (E-mail ou Apelido)
+            const emailExists = users.some(u => u.email === email);
+            const nickExists = users.some(u => u.nickname.toLowerCase() === nickname.toLowerCase());
+
+            if (emailExists) {
+                alert("⚠️ ALERTA: E-mail já cadastrado no sistema! Efetue login ou recupere a senha.");
+                return;
+            }
+            if (nickExists) {
+                alert("⚠️ ALERTA: Este Apelido / GamerTag já está em uso por outro comandante.");
+                return;
+            }
+
+            // Criar Novo Usuário
+            const newUser = {
+                name, nickname, age, phone, whatsapp, email, password,
+                passwordHistory: [password],
+                score: 0
+            };
+
+            users.push(newUser);
+            setStorage('senai_users', users);
+
+            // Notificações Simuladas (Email e WhatsApp)
+            const msgNotify = `Olá ${nickname}! Cadastro no SENAI GAME SQL efetuado com sucesso! Bem-vindo à missão espacial.`;
+            triggerNotification(`[E-mail & WhatsApp Enviados para ${whatsapp}]: ${msgNotify}`, "CONFIRMAÇÃO DE CADASTRO");
+
+            alert("✅ Cadastro efetuado com sucesso! Notificação enviada para e-mail e WhatsApp.");
+            document.getElementById('form-register').reset();
+            showScreen('screen-login');
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value.trim().toLowerCase();
+            const password = document.getElementById('login-password').value;
+
+            const users = getStorage('senai_users');
+            const user = users.find(u => u.email === email && u.password === password);
+
+            if (!user) {
+                alert("❌ Credenciais inválidas! Verifique e-mail e senha.");
+                return;
+            }
+
+            currentUser = user;
+            document.getElementById('player-welcome').innerText = `Cadete: ${currentUser.nickname}`;
+            
+            // Notificação de Acesso
+            triggerNotification(`Login detectado para ${currentUser.nickname}. Sessão iniciada no SENAI GAME SQL.`, "Aviso de Segurança");
+
+            showScreen('screen-quiz');
+            renderSlide();
+        }
+
+        function sendOTP() {
+            const email = document.getElementById('forgot-email').value.trim().toLowerCase();
+            const users = getStorage('senai_users');
+            const user = users.find(u => u.email === email);
+
+            if (!user) {
+                alert("❌ E-mail não localizado no banco de dados.");
+                return;
+            }
+
+            // Gerar Código OTP de 6 dígitos
+            activeOTP = Math.floor(100000 + Math.random() * 900000).toString();
+            
+            // Notificação de Envio do Código
+            const msg = `Código de Segurança SENAI GAME SQL: ${activeOTP}. Use-o para alterar sua senha.`;
+            triggerNotification(`[WhatsApp (${user.whatsapp}) & Email]: ${msg}`, "CÓDIGO DE RECUPERAÇÃO");
+
+            alert(`✅ Código de recuperação (OTP) gerado e enviado para o E-mail e WhatsApp do usuário!\n\n(Código Simulado: ${activeOTP})`);
+            
+            document.getElementById('step-otp-req').style.display = 'none';
+            document.getElementById('step-otp-verify').style.display = 'block';
+        }
+
+        function resetPassword() {
+            const otpInput = document.getElementById('otp-code-input').value.trim();
+            const newPassword = document.getElementById('new-password-input').value;
+            const email = document.getElementById('forgot-email').value.trim().toLowerCase();
+
+            if (otpInput !== activeOTP) {
+                alert("❌ Código OTP incorreto ou expirado.");
+                return;
+            }
+
+            if (!newPassword) {
+                alert("❌ Informe uma nova senha válida.");
+                return;
+            }
+
+            const users = getStorage('senai_users');
+            const userIndex = users.findIndex(u => u.email === email);
+
+            if (userIndex !== -1) {
+                const user = users[userIndex];
+                
+                // Validação de Senha Repetida
+                if (user.passwordHistory && user.passwordHistory.includes(newPassword)) {
+                    alert("🚫 PROIBIDO: Esta senha já foi utilizada anteriormente! Digite uma senha nova.");
+                    return;
+                }
+
+                // Atualizar Senha e Histórico
+                user.password = newPassword;
+                if (!user.passwordHistory) user.passwordHistory = [];
+                user.passwordHistory.push(newPassword);
+
+                users[userIndex] = user;
+                setStorage('senai_users', users);
+
+                triggerNotification(`Sua senha no SENAI GAME SQL foi alterada com sucesso!`, "ALTERAÇÃO DE SENHA");
+                alert("✅ Senha alterada com sucesso! Faça login com a nova senha.");
+
+                // Reset do Formulário
+                document.getElementById('step-otp-req').style.display = 'block';
+                document.getElementById('step-otp-verify').style.display = 'none';
+                document.getElementById('forgot-email').value = '';
+                document.getElementById('otp-code-input').value = '';
+                document.getElementById('new-password-input').value = '';
+                activeOTP = null;
+
+                showScreen('screen-login');
+            }
+        }
+
+        /* ==========================================================================
+           5. EXECUÇÃO E LÓGICA DO QUIZ (100 SLIDES)
+           ========================================================================== */
+        function startQuizIfLogged() {
+            if (currentUser) {
+                showScreen('screen-quiz');
+                renderSlide();
+            } else {
+                alert("Efetue o login para acessar o Game.");
+                showScreen('screen-login');
+            }
+        }
+
+        function renderSlide() {
+            const slide = slides[currentSlideIdx];
+            const area = document.getElementById('quiz-content-area');
+            const typeBadge = document.getElementById('quiz-type-badge');
+            const counter = document.getElementById('quiz-counter');
+            const progress = document.getElementById('quiz-progress');
+            const checkBtn = document.getElementById('btn-check-answer');
+
+            typeBadge.innerText = slide.type === 'theory' ? '📘 CONCEITO TEÓRICO' : '📝 DESAFIO PRÁTICO';
+            counter.innerText = `${currentSlideIdx + 1} / 100`;
+            progress.style.width = `${((currentSlideIdx + 1) / 100) * 100}%`;
+
+            if (slide.type === 'theory') {
+                checkBtn.style.display = 'none';
+                area.innerHTML = `
+                    <h2 style="color: var(--neon-blue);">${slide.title}</h2>
+                    <p style="font-size: 1.2rem; line-height: 1.7; color: var(--text-light); margin-top: 20px;">
+                        ${slide.content}
+                    </p>
+                `;
+            } else {
+                checkBtn.style.display = 'inline-flex';
+                checkBtn.disabled = slide.attemptsLeft <= 0;
+
+                let optsHtml = slide.options.map((opt, i) => `
+                    <div class="option-card ${selectedQuizOption === i ? 'selected' : ''}" onclick="selectQuizOption(${i})">
+                        ${opt}
+                    </div>
+                `).join('');
+
+                area.innerHTML = `
+                    <h2 style="color: var(--neon-purple);">${slide.title}</h2>
+                    <p style="font-size: 1.15rem; margin-bottom: 15px;">${slide.question}</p>
+                    <div class="options-list">${optsHtml}</div>
+                    <div id="quiz-feedback" style="margin-top: 15px; font-weight: bold; font-size: 1rem; min-height: 25px;">
+                        ${slide.attemptsLeft < 3 ? `Tentativas restantes: ${slide.attemptsLeft}` : ''}
+                    </div>
+                `;
+            }
+
+            document.getElementById('btn-prev-slide').disabled = currentSlideIdx === 0;
+            selectedQuizOption = null;
+        }
+
+        function selectQuizOption(idx) {
+            const slide = slides[currentSlideIdx];
+            if (slide.type !== 'quiz' || slide.attemptsLeft <= 0) return;
+
+            selectedQuizOption = idx;
+            document.querySelectorAll('.option-card').forEach((card, i) => {
+                card.classList.toggle('selected', i === idx);
+            });
+        }
+
+        function checkQuizAnswer() {
+            const slide = slides[currentSlideIdx];
+            if (selectedQuizOption === null) {
+                alert("Selecione uma resposta antes de verificar.");
+                return;
+            }
+
+            const feedback = document.getElementById('quiz-feedback');
+
+            if (selectedQuizOption === slide.correct) {
+                feedback.style.color = "var(--success)";
+                feedback.innerText = "✅ RESPOSTA CORRETA! Pontuação computada.";
+                slide.attemptsLeft = 0;
+                document.getElementById('btn-check-answer').disabled = true;
+
+                // Atualizar pontuação do jogador
+                if (currentUser) {
+                    currentUser.score = (currentUser.score || 0) + 10;
+                    saveUserScore();
+                }
+            } else {
+                slide.attemptsLeft--;
+                if (slide.attemptsLeft > 0) {
+                    feedback.style.color = "var(--error)";
+                    feedback.innerText = `❌ Incorreto! Tentativas restantes: ${slide.attemptsLeft}`;
+                } else {
+                    feedback.style.color = "var(--error)";
+                    feedback.innerText = `❌ Tentativas esgotadas! Resposta correta: ${slide.options[slide.correct]}`;
+                    document.getElementById('btn-check-answer').disabled = true;
+                }
+            }
+        }
+
+        function navigateSlide(dir) {
+            if (currentSlideIdx + dir >= 0 && currentSlideIdx + dir < slides.length) {
+                currentSlideIdx += dir;
+                renderSlide();
+            } else if (currentSlideIdx + dir >= slides.length) {
+                alert("🎉 PARABÉNS! Você concluiu todos os 100 slides do SENAI GAME SQL!");
+                showScreen('screen-ranking');
+            }
+        }
+
+        function saveUserScore() {
+            const users = getStorage('senai_users');
+            const idx = users.findIndex(u => u.email === currentUser.email);
+            if (idx !== -1) {
+                users[idx].score = currentUser.score;
+                setStorage('senai_users', users);
+            }
+
+            // Atualizar Ranking Público Global
+            let rankings = getStorage('senai_ranking');
+            const rankIdx = rankings.findIndex(r => r.nickname === currentUser.nickname);
+
+            const record = {
+                nickname: currentUser.nickname,
+                score: currentUser.score,
+                date: new Date().toLocaleString('pt-BR')
+            };
+
+            if (rankIdx !== -1) {
+                rankings[rankIdx] = record;
+            } else {
+                rankings.push(record);
+            }
+
+            setStorage('senai_ranking', rankings);
+        }
+
+        /* ==========================================================================
+           6. RANKING PÚBLICO E PERSISTENTE
+           ========================================================================== */
+        function renderRanking() {
+            const rankings = getStorage('senai_ranking');
+            // Ordenar por maior pontuação
+            rankings.sort((a, b) => b.score - a.score);
+
+            const tbody = document.getElementById('ranking-tbody');
+            if (rankings.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-dim);">Nenhum registro espacial encontrado.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = rankings.map((r, i) => `
+                <tr>
+                    <td style="font-weight: bold; color: var(--neon-blue);">${i + 1}º</td>
+                    <td>${r.nickname}</td>
+                    <td style="color: var(--success); font-weight: bold;">${r.score} PTS</td>
+                    <td style="color: var(--text-dim); font-size: 0.85rem;">${r.date}</td>
+                </tr>
+            `).join('');
+        }
+
+        /* ==========================================================================
+           7. SISTEMA ANTIFRAUDE E SEGURANÇA (Anti-Copy & Window Focus)
+           ========================================================================== */
+        function showAntiCheatModal() {
+            document.getElementById('anticheat-modal').style.display = 'flex';
+        }
+
+        function closeAntiCheatModal() {
+            document.getElementById('anticheat-modal').style.display = 'none';
+        }
+
+        // Bloqueio de Copiar / Colar / Recortar
+        document.addEventListener('copy', (e) => { e.preventDefault(); showAntiCheatModal(); });
+        document.addEventListener('paste', (e) => { e.preventDefault(); showAntiCheatModal(); });
+        document.addEventListener('cut', (e) => { e.preventDefault(); showAntiCheatModal(); });
+
+        // Bloqueio de Botão Direito
+        document.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            showAntiCheatModal();
+        });
+
+        // Detecção de troca de janela/aba
+        window.addEventListener('blur', () => {
+            showAntiCheatModal();
+        });
+
+        // Bloqueio de Atalhos
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && (e.key === 'c' || e.key === 'v' || e.key === 'u' || e.key === 's')) {
+                e.preventDefault();
+                showAntiCheatModal();
+            }
+        });
+    </script>
+</body>
+</html>
